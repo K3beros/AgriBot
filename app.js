@@ -1,6 +1,11 @@
 var express = require("express");
 var request = require("request");
 var bodyParser = require("body-parser");
+var bootbot = require("bootbot");
+
+
+//configuring bootbot
+
 
 var app = express();
 app.use(bodyParser.urlencoded({extended: false}));
@@ -75,19 +80,39 @@ function processPostback(event) {
   }
 }
 
-// sends message to user
-function sendMessage(recipientId, message) {
-  request({ 
-    url: "https://graph.facebook.com/v2.6/me/messages",
-    qs: {access_token: process.env.PAGE_ACCESS_TOKEN},
-    method: "POST",
-    json: {
-      recipient: {id: recipientId},
-      message: message,
-    }
-  }, function(error, response, body) {
-    if (error) {
-      console.log("Error sending message: " + response.error);
-    }
+
+bot.on('message', (payload, chat) => {
+  const text = payload.message.text;
+  console.log(`The user said: ${text}`);
+});
+
+bot.hear(['hello', 'hi', /hey( there)?/i], (payload, chat) => {
+  console.log('The user said "hello", "hi", "hey", or "hey there"');
+});
+
+bot.hear(['hello', 'hi', /hey( there)?/i], (payload, chat) => {
+  // Send a text message followed by another text message that contains a typing indicator
+  chat.say('Hello, human friend!').then(() => {
+    chat.say('How are you today?', { typing: true });
   });
-}
+});
+
+bot.hear(['food', 'hungry'], (payload, chat) => {
+  // Send a text message with quick replies
+  chat.say({
+    text: 'What do you want to eat today?',
+    quickReplies: ['Mexican', 'Italian', 'American', 'Argentine']
+  });
+});
+
+bot.hear(['help'], (payload, chat) => {
+  // Send a text message with buttons
+  chat.say({
+    text: 'What do you need help with?',
+    buttons: [
+      { type: 'postback', title: 'Settings', payload: 'HELP_SETTINGS' },
+      { type: 'postback', title: 'FAQ', payload: 'HELP_FAQ' },
+      { type: 'postback', title: 'Talk to a human', payload: 'HELP_HUMAN' }
+    ]
+  });
+});
